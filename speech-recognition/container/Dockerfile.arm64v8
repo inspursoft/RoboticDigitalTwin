@@ -1,0 +1,19 @@
+FROM arm64v8/python:3.6-slim-stretch
+MAINTAINER fanzhihai@inspur.com
+
+RUN mkdir /speech-recognition
+
+COPY speech-recognition /speech-recognition
+COPY conf/.asoundrc /root/.asoundrc
+COPY container/sources.list /etc/apt/sources.list
+
+WORKDIR /speech-recognition
+RUN apt update && apt install -y portaudio19-dev gcc libffi-dev make
+RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host mirrors.aliyun.com pyaudio cffi websocket websocket-client flask
+
+EXPOSE 8000
+
+ENV FLASK_APP speech-recognition.py
+ENV PYTHONUNBUFFERED 0
+
+CMD [ "python3", "speech-recognition.py", "&" ]

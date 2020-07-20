@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="initial-scale=1.0">
+  <title>2d robotic arm</title>
+  <style>
+    label {
+      display: inline-block;
+      width: 110px;
+    }
+
+    #draggable {
+      width: 320px;
+      height: 260px;
+      background-color: white;
+      position: absolute;
+      z-index: 999;
+      top: 50%;
+      right: -10%;
+      transform: translateX(-50%) translateY(-50%);
+      -moz-transform: translateX(-50%) translateY(-50%);
+      -webkit-transform: translateX(-50%) translateY(-50%);
+      -ms-transform: translateX(-50%) translateY(-50%);
+      border-radius: 5px;
+      box-shadow: 3px 3px 10px blue;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="draggable"
+       hidden="true"
+       ondblclick="enlargeMonitor()">
+    <span>Drag to move, double click to enlarge</span>
+    <img src=""
+         width="320"
+         height="240"
+         alt="can't connect to monitor!"
+         id="monitor">
+  </div>
+
+  <div style="display: inline-block;">
+
+    <div style="display: inline-block; vertical-align: top;">
+      <div>
+        <p>Connection:</p>
+        <label for="ws-ip">host:</label>
+        <input type="text"
+               name="ws-ip"
+               id="ws-ip"
+               placeholder="eg: 10.164.17.14:8181"
+               value="10.164.17.14:8181">
+        <span for="ws-ip"
+              id="connected"
+              style="background: green; color: aliceblue; border-radius: 50%"
+              hidden="true">
+          &nbsp√&nbsp
+        </span>
+        <br>
+        <span>Please input the IP & port of robotic arm.</span>
+        <div>
+          <button onclick="onConnect()"
+                  id="connect">Connect</button>
+          <button onclick="onDisconnect()"
+                  id="disconnect"
+                  disabled="true">Disconnect</button>
+        </div>
+        <div>
+          <button onclick="xMovingDirection = 0; xScalingDirection = 0">stop</button>
+          <button onclick="xMovingDirection = 1; xScalingDirection = -1">start</button>
+        </div>
+      </div>
+
+      <br>
+
+      <div id="operation"
+           hidden="true">
+        <p>Operations:</p>
+        <div>
+          <label for="claw">Claw: <span id="claw-value">1500</span></label>
+          <button class="operation"
+                  onclick="onBtn('claw', false,1500)"> - </button>
+          <input type="range"
+                 id="claw"
+                 name="claw"
+                 min="500"
+                 max="1500"
+                 value="1500"
+                 step="20"
+                 onchange=""
+                 oninput="onRange('claw')"
+                 class="operation">
+          <button class="operation"
+                  onclick="onBtn('claw', true,1500)"> + </button>
+        </div>
+
+        <div>
+          <label for="head">Head: <span id="head-value">1500</span></label>
+          <button class="operation"
+                  onclick="onBtn('head',false)"> - </button>
+          <input type="range"
+                 id="head"
+                 name="head"
+                 min="500"
+                 max="2500"
+                 value="1500"
+                 step="20"
+                 onchange=""
+                 oninput="onRange('head')"
+                 class="operation">
+          <button class="operation"
+                  onclick="onBtn('head')"> + </button>
+        </div>
+
+        <div>
+          <label for="middle">Middle: <span id="middle-value">1500</span></label>
+          <button class="operation"
+                  onclick="onBtn('middle',false)"> - </button>
+          <input type="range"
+                 id="middle"
+                 name="middle"
+                 min="500"
+                 max="2500"
+                 value="1500"
+                 step="20"
+                 onchange=""
+                 oninput="onRange('middle')"
+                 class="operation">
+          <button class="operation"
+                  onclick="onBtn('middle')"> + </button>
+        </div>
+
+        <div>
+          <label for="bottom">Bottom: <span id="bottom-value">1500</span></label>
+          <button class="operation"
+                  onclick="onBtn('bottom',false)"> - </button>
+          <input type="range"
+                 id="bottom"
+                 name="bottom"
+                 min="500"
+                 max="2500"
+                 value="1500"
+                 step="20"
+                 onchange=""
+                 oninput="onRange('bottom')"
+                 class="operation">
+          <button class="operation"
+                  onclick="onBtn('bottom')"> + </button>
+        </div>
+
+        <div>
+          <label for="base">Base: </label>
+          <button class="operation"
+                  onclick="document.getElementById('base').value = 500; onBase()"> left </button>
+          <input type="range"
+                 id="base"
+                 name="base"
+                 min="500"
+                 max="2500"
+                 value="500"
+                 step="2000"
+                 oninput="onBase()"
+                 style="width: 98px;"
+                 class="operation">
+          <button class="operation"
+                  onclick="document.getElementById('base').value = 2500; onBase()"> right </button>
+        </div>
+
+        <button onclick="onReset()"
+                id="reset"
+                class="operation">Reset</button>
+
+        <br>
+        <br>
+        <span>Actions: </span>
+        <button onclick="onCatch('left')"
+                class="operation">Catch Left</button>
+        <button onclick="onCatch('right')"
+                class="operation">Catch Right</button>
+      </div>
+
+    </div>
+
+    <div style="display: inline-block;">
+      <canvas width="600"
+              height="500"
+              id="canvas"
+              style="border-radius: 20px;"></canvas>
+      <canvas>Your browser does not support the canvas element.</canvas>
+    </div>
+  </div>
+
+
+  <br>
+  <br>
+  <div>
+    <strong>robotic arm:</strong>
+    <br>
+    <div style="display: inline-block; text-align: center;">
+      <img src="asset/arm.png"
+           alt="robotic arm - front"
+           height="500">
+      <br>
+      front
+    </div>
+
+    <div style="display: inline-block; text-align: center;">
+      <img src="asset/top.png"
+           alt="robotic arm - left"
+           height="500">
+      <br>
+      left
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    var baseline = 1500;
+    var nameList = ['claw', 'head', 'middle', 'bottom'];
+    var leftCube;
+
+    function onConnect() {
+      document.getElementById('connect').disabled = true;
+      var host = document.getElementById('ws-ip').value;
+      if ("WebSocket" in window) {
+        ws = new WebSocket("ws://" + host);
+        ws.onopen = function () {
+          document.getElementById('connected').hidden = false;
+          document.getElementById('disconnect').disabled = false;
+          document.getElementById('operation').hidden = false;
+
+          document.getElementById('draggable').hidden = false;
+          var ip = host.split(':')[0];
+          document.getElementById('monitor').src = 'http://' + ip + ':8080/?action=stream';
+          console.log('连接成功');
+        };
+        ws.onmessage = function (evt) {
+          var received_msg = JSON.parse(evt.data);
+          // console.log(received_msg);
+          rotateDegreesBottom = (received_msg.bottom - baseline) / 1000 * 135;
+          rotateDegreesMiddle = (baseline - received_msg.middle) / 1000 * 135;
+          rotateDegreesHead = (baseline - received_msg.head) / 1000 * 90;
+          rotateDegreesClaw = (received_msg.claw - baseline) / 1000 * 45 + 16;
+        };
+        ws.onclose = function () {
+          document.getElementById('connected').hidden = true;
+          document.getElementById('disconnect').disabled = true;
+          document.getElementById('connect').disabled = false;
+          document.getElementById('operation').hidden = true;
+
+          document.getElementById('draggable').hidden = true;
+          document.getElementById('monitor').src = '';
+          alert("断开了连接或者连接失败，请确保机械臂正在运行且 IP 正确");
+        };
+      } else {
+        alert("当前浏览器不支持WebSocket，推荐使用新版Chrome浏览器打开");
+      }
+    }
+
+    function onDisconnect() {
+      if (ws) {
+        ws.close();
+      }
+    }
+
+    function onRange(id) {
+      var value = document.getElementById(id).value;
+      document.getElementById(id + '-value').innerHTML = value;
+      if (id === 'bottom') {
+        value = 3000 - Number(value);
+      }
+      ws.send(id + ":" + value)
+    }
+
+    function onBase() {
+      disabledOperation();
+      var value = document.getElementById('base').value;
+      ws.send('base' + ":" + value)
+    }
+
+    function onBtn(id, add = true, max = 2500, min = 500) {
+      var value = Number(document.getElementById(id).value);
+      value = add ? 20 + value : value - 20;
+      if (value > max) {
+        console.log('too big:' + value)
+        value = max;
+      }
+      if (value < min) {
+        console.log('too small:' + value)
+        value = min;
+      }
+      document.getElementById(id).value = value;
+      onRange(id)
+    }
+
+    function onReset() {
+      disabledOperation(2000);
+      ws.send("reset");
+      nameList.forEach(item => {
+        document.getElementById(item).value = 1500;
+        document.getElementById(item + '-value').innerHTML = 1500;
+      });
+      document.getElementById('base').value = 500;
+    }
+
+    function onCatch(target = 'left') {
+      disabledOperation(16 * 1000);
+      ws.send('catch:' + target);
+    }
+
+    function disabledOperation(time = 1000) {
+      var operationList = document.getElementsByClassName('operation');
+      for (let index = 0; index < operationList.length; index++) {
+        operationList[index].disabled = true;
+      }
+      setTimeout(() => {
+        for (let index = 0; index < operationList.length; index++) {
+          operationList[index].disabled = false;
+        }
+      }, time);
+    }
+
+    function dragFunc(id) {
+      var Drag = document.getElementById(id);
+      Drag.onmousedown = function (event) {
+        var ev = event || window.event;
+        event.stopPropagation();
+        var disX = ev.clientX - Drag.offsetLeft;
+        var disY = ev.clientY - Drag.offsetTop;
+        document.onmousemove = function (event) {
+          var ev = event || window.event;
+          Drag.style.left = ev.clientX - disX + "px";
+          Drag.style.top = ev.clientY - disY + "px";
+          Drag.style.cursor = "move";
+        };
+      };
+      Drag.onmouseup = function () {
+        document.onmousemove = null;
+        this.style.cursor = "default";
+      };
+    };
+    dragFunc("draggable");
+
+    var zoom = 1;
+    function enlargeMonitor() {
+      zoom = zoom < 2 ? zoom + 0.5 : 1;
+
+      var width = 320 * zoom;
+      var height = 240 * zoom;
+
+      document.getElementById("monitor").width = width;
+      document.getElementById("monitor").height = height;
+
+      document.getElementById("draggable").style.width = width + 'px';
+      document.getElementById("draggable").style.height = (height + 20) + 'px';
+    }
+  </script>
+</body>
+
+</html>

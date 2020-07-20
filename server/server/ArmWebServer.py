@@ -42,7 +42,7 @@ sight = {"left":"red"}
 async def hearing_and_sight():
     global receiveTime
     global sight
-    hearingUrl = "http://10.164.17.20:8000/getColor" # 10.165.19.234
+    hearingUrl = "http://192.168.149.48:8000/getColor" # 10.165.19.234
     sightUrl = "http://10.164.17.14:8183"
 
     while True:
@@ -65,7 +65,7 @@ async def hearing_and_sight():
                 base = 500
                 if (sight["left"] == 'red' and hear == "蓝") or (sight["left"] == 'blue' and hear == "红"):
                     base = 2500
-                print("hearing: %s\tsight: %s" %(hear, sight["left"]))
+                print("hearing: %s\tsight-left: %s" %(hear, sight["left"]))
                 await catchCube(base)
                 await asyncio.sleep(5.5)
             else:

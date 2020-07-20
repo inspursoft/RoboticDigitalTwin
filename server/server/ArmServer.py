@@ -95,7 +95,7 @@ if __name__ == "__main__":
                 d.append(LeConf.Deviation[i] - 1500)
 
     controller.initLeArm(tuple(d))
-    ArmCmd.cmd_i001([1000, 6, 1, 1500, 2, 1500, 3, 1500, 4, 1500, 5, 1500, 6, 500])
+    ArmCmd.cmd_i001([1000, 6, 1, 1500, 2, 500, 3, 1500, 4, 1500, 5, 1500, 6, 500])
     server = LeServer(("", 8947), ServoServer)
     try:
         server_thread = threading.Thread(target=server.serve_forever)

@@ -1,0 +1,23 @@
+FROM raspbian/stretch
+
+RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/raspbian/raspbian stretch main contrib non-free rpi firmware" > /etc/apt/sources.list; \
+    echo "deb-src http://mirrors.tuna.tsinghua.edu.cn/raspbian/raspbian stretch main contrib non-free rpi firmware" >> /etc/apt/sources.list; \
+    echo "deb http://mirror.tuna.tsinghua.edu.cn/raspberrypi/ stretch main ui" > /etc/apt/sources.list.d/raspi.list; \
+    echo "deb-src http://mirror.tuna.tsinghua.edu.cn/raspberrypi/ stretch main ui" >> /etc/apt/sources.list.d/raspi.list;
+
+RUN apt-get update && apt-get -y install python3 \
+    python3-pip \
+    python3-rpi.gpio \
+    python3-pigpio
+
+RUN pip3 install websockets -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+COPY ./server /home/pi/Arm_Pi
+
+WORKDIR /home/pi/Arm_Pi
+
+ENV PYTHONUNBUFFERED=0 PYTHONIOENCODING=utf-8
+
+ENTRYPOINT [ "python3", "ArmServer.py" ]
+
+EXPOSE 8947 8181
